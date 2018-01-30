@@ -10,6 +10,7 @@
 	  "default_popup": "feed.html",
 	  "default_title": "J-Queue"
   },
+  "options_page":"options.html",
   "permissions": [
     "activeTab",
     "storage"
