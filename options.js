@@ -149,12 +149,17 @@ function save_callback()
 
 function clear_storage()
 {
+    for (var i = 0; i < web_series_list.length; i++) {
+        var novel_obj = web_series_list[i];
+        document.getElementById(novel_obj.id).checked = false;
+    }
+
     chrome.storage.sync.clear(clear_callback);
 }
 
 function clear_callback()
 {
-    alert('J-Queue Cleared Storage');
+    alert('J-Queue Cleared Selected Series');
 }
 
 document.addEventListener('DOMContentLoaded', main);

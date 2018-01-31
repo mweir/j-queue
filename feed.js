@@ -1,47 +1,33 @@
-// Copyright (c) 2011 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
-// Feed
-var feedUrl = 'https://api.j-novel.club/api/series?filter={%22order%22:%22title%22}'
-
-// The XMLHttpRequest object that tries to load and parse the feed.
-var req;
 
 function main() {
-  req = new XMLHttpRequest();
-  req.onload = handleResponse;
-  req.onerror = handleError;
-  req.open('GET', feedUrl, true);
-  req.send(null);
+    load_series_list();
 }
 
-// Handles feed parsing errors.
-function handleFeedParsingFailed(error) {
-  var feed = document.getElementById('feed');
-  feed.className = 'error';
-  feed.innerText = 'Error: ' + error;
+function load_series_list()
+{
+    chrome.storage.sync.get("series_list", load_callback);
 }
 
-// Handles errors during the XMLHttpRequest.
-function handleError() {
-  handleFeedParsingFailed('Failed to fetch RSS feed.');
+function load_callback(items)
+{
+    if (items.hasOwnProperty('series_list')) {
+        buildFeedList(JSON.parse(items.series_list));
+    }
+    else {
+        handleEmptyFeed();
+    }
 }
 
-// Handles parsing the feed data we got back from XMLHttpRequest.
-function handleResponse() {
-  var json_obj = JSON.parse(req.response);
-  if (!json_obj) {
-    handleFeedParsingFailed('Not a valid feed.');
-    return;
-  }
-
-  buildFeedList(json_obj);
+function handleEmptyFeed()
+{
+    var feed = document.getElementById('feed');
+    feed.innerText = "Select Series to follow via the Options Menu";
 }
 
 
-function buildFeedList(json_obj) {
+function buildFeedList(series_list) {
 
+    var not_following = true;
 	var feed = document.getElementById('feed');
 	// Set ARIA role indicating the feed element has a tree structure
 
@@ -49,20 +35,27 @@ function buildFeedList(json_obj) {
 
 	var list = document.createElement('ul');
 
-	for (var i = 0; i < json_obj.length; i++) {
-		var novel_obj = json_obj[i];
-		var item = document.createElement('li');
+	for (var i = 0; i < series_list.length; i++) {
+		var novel_obj = series_list[i];
+        if (novel_obj.follow) {
+    		var item = document.createElement('li');
 		
-		// Sets its contents
-		item.appendChild(document.createTextNode(novel_obj.title));
+	    	// Sets its contents
+		    item.appendChild(document.createTextNode(novel_obj.title));
 		
-		// Add it to the list
-		list.appendChild(item);
+	    	// Add it to the list
+	    	list.appendChild(item);
 
-        console.log(novel_obj.title);
+            console.log(novel_obj.title);
+
+            not_following = false;
+        }
 	}
 
-	feed.appendChild(list);
+    if (not_following)
+        handleEmptyFeed();
+    else
+	    feed.appendChild(list);
 }
 
 
