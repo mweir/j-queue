@@ -89,16 +89,26 @@ function buildOptionsList()
 
 function save_options()
 {
+    var saved_series_list = [];
     for (var i = 0; i < web_series_list.length; i++) {
         var novel_obj = web_series_list[i];
+        var saved_novel_obj = {};
+
         var follow = document.getElementById(novel_obj.id).checked
 
-        novel_obj.follow = follow;
+        // Previously was just adding follow to novel object and
+        // saving the web series list directly. However, the web
+        // series list was too big to be saved as a single object by the 
+        // chrome sync interface. Thus, I just pull the information that 
+        // is needed later
+        saved_novel_obj.id = novel_obj.id;
+        saved_novel_obj.title = novel_obj.title;
+        saved_novel_obj.follow = follow;
 
-        console.log(novel_obj);
+        saved_series_list.push(saved_novel_obj);
     }
 
-    chrome.storage.sync.set({"series_list": JSON.stringify(web_series_list)}, save_callback);
+    chrome.storage.sync.set({"series_list": JSON.stringify(saved_series_list)}, save_callback);
 }
 
 function restore_options()
@@ -108,9 +118,11 @@ function restore_options()
 
 function restore_callback(items)
 {
-    console.log(items);
-    /*if (items) {
-        var saved_series_list = JSON.parse(items.saved_series_list);
+    if (items.hasOwnProperty('series_list')) {
+        var saved_series_list = JSON.parse(items.series_list);
+
+        console.log(saved_series_list);
+
         for (var i = 0; i < saved_series_list.length; ++i) {
             var novel_obj = saved_series_list[i];
             var checkbox = document.getElementById(novel_obj.id)
@@ -123,15 +135,26 @@ function restore_callback(items)
 
             checkbox.checked = novel_obj.follow;
         }
-    }*/
+    }
 
     // Now that the previous options are restored the user can change them
     document.getElementById('save').addEventListener('click', save_options);
+    document.getElementById('clear').addEventListener('click', clear_storage);
 }
 
 function save_callback()
 {
     alert('J-Queue Updated');
+}
+
+function clear_storage()
+{
+    chrome.storage.sync.clear(clear_callback);
+}
+
+function clear_callback()
+{
+    alert('J-Queue Cleared Storage');
 }
 
 document.addEventListener('DOMContentLoaded', main);
