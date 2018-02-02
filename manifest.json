@@ -13,6 +13,14 @@
   "options_page":"options.html",
   "permissions": [
     "activeTab",
-    "storage"
-  ]
+    "storage",
+    "cookies",
+    "webRequest",
+    "*://*.j-novel.club/"
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  }
 }
