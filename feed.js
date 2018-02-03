@@ -1,6 +1,7 @@
 
 var userUrl = 'https://api.j-novel.club/api/users/';
 var userFilter = '?filter={%22include%22:[%22accessTokens%22,%22credentials%22,%22identities%22,%22readParts%22,%22roles%22,%22subscriptions%22]}'
+var redirectURL = 'https://j-novel.club/c/'
 
 var follow_list;
 var parts_hash_table;
@@ -85,6 +86,35 @@ function read_chapter(part_id)
     return false;
 }
 
+function activate_accordion_buttons() {
+    var acc = document.getElementsByClassName("accordion");
+    var i;
+
+    for (i = 0; i < acc.length; i++) {
+        acc[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            var panel = this.nextElementSibling;
+            if (panel.style.display === "block") {
+                panel.style.display = "none";
+            } else {
+                panel.style.display = "block";
+            }
+        });
+    }
+}
+
+function activate_hyperlinks() {
+    var links = document.getElementsByTagName("a");
+    for (var i = 0; i < links.length; i++) {
+        (function () {
+            var ln = links[i];
+            var location = ln.href;
+            ln.onclick = function () {
+                chrome.tabs.create({active: true, url: location});
+            };
+        })();
+    }
+}
 
 function buildFeedList() {
 
@@ -94,31 +124,48 @@ function buildFeedList() {
 
     feed.setAttribute('role', 'tree');
 
-    var list = document.createElement('ul');
 
     for (var i = 0; i < follow_list.length; i++) {
         var unread_count = 0;
         var novel_obj = follow_list[i];
-        var parts = parts_hash_table[novel_obj.id]
-        var item = document.createElement('li');
+        var parts = parts_hash_table[novel_obj.id];
+        var unread = [];
 
         for (var j = 0; j < parts.length; j++) {
             if (!read_chapter(parts[j].id)) {
                 unread_count = unread_count + 1;
+                unread.push(parts[j]);
             }
         }
         
+        if (unread_count == 0) {
+            continue;
+        }
 
-        // Sets its contents
-        item.appendChild(document.createTextNode(novel_obj.title +" (" + unread_count +")"));
+        var novel_button = document.createElement('button');
+        novel_button.innerText = novel_obj.title + " (" + unread_count + ")";
+        novel_button.classList.add('accordion');
+        
+        var part_div = document.createElement('div');
+        part_div.classList.add('panel');
 
-       // Add it to the list
-       list.appendChild(item);
+        feed.appendChild(novel_button);
+        feed.appendChild(part_div);
 
-       console.log(novel_obj.title);
+        for (var j = 0; j < unread_count; j++) {
+            var part_section = document.createElement('div');
+            var part_hyperlink = document.createElement('a');
+            part_hyperlink.innerText = unread[j].title;
+            part_hyperlink.setAttribute('href', redirectURL + unread[j].titleslug + "/search");
+            part_section.appendChild(part_hyperlink);
+            part_div.appendChild(part_section);
+        }
+    
+        console.log(novel_obj.title);
     }
 
-    feed.appendChild(list);
+    activate_accordion_buttons();
+    activate_hyperlinks();
 }
 
 
