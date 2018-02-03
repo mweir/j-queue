@@ -1,3 +1,9 @@
+// Copyright (c) 2018
+// @author Michael Weir
+// Use of this source code is govered by the GPLv3 license that can be
+// found in the LICENSE file
+
+// This file is responsible for displaying the User's queue
 
 var userUrl = 'https://api.j-novel.club/api/users/';
 var userFilter = '?filter={%22include%22:[%22accessTokens%22,%22credentials%22,%22identities%22,%22readParts%22,%22roles%22,%22subscriptions%22]}'
@@ -8,41 +14,59 @@ var parts_hash_table;
 var read_parts;
 var req;
 
+// Main function responsible for loading the queue and displaying the results
 function main() {
     load_follow_list();
 }
 
+// Loads the list of novels that the user is following and
+// then calls the load callback
 function load_follow_list()
 {
     chrome.storage.sync.get("follow_list", load_callback);
 }
 
+// Load callback parses the novel follow list. It handles displaying
+// a message to the user if they have not configured a list of novels to
+// follow
 function load_callback(items)
 {
+    // Check if the a follow list exists
     if (!items.hasOwnProperty('follow_list')) {
         handleEmptyFeed();
         return;
     }
-    
+   
+    // Cheks if there are any novels in the list 
     follow_list = JSON.parse(items.follow_list);
     if (follow_list.length == 0) {
         handleEmptyFeed();
         return;
     }
     
+    // Query's the user information about which chapters
+    // the user has already read
     read_user_info();
 }
 
+// Function responsilbe for loading both the available chapter list and the
+// chapter list that the user has already read
 function read_user_info()
 {
     chrome.storage.local.get(["auth_obj", "parts_hash_table"], storage_callback);
 }
 
+// Storage callback responsible for parsing the available chapter list
+// and forming the HTTP request to query which chapters the user has
+// already read
 function storage_callback(items) {
+    // Parses the available chapter list
     if (items.hasOwnProperty('parts_hash_table')) {
         parts_hash_table = JSON.parse(items.parts_hash_table);
     }
 
+    // Parses the auth object needed to query the chapters the user
+    // has already read.
     if (items.hasOwnProperty('auth_obj')) {
         var auth_obj = JSON.parse(items.auth_obj);
         console.log(auth_obj);
@@ -54,27 +78,47 @@ function storage_callback(items) {
         req.setRequestHeader('Authorization', auth_obj.auth_value);
         req.send(null);
     }
+    else {
+        handleFeedConnectionError(401);
+    }
 }
 
+// Handles an HTTP request error form the query user info request
 function handleError()
 {
     console.log("Error:")
     console.log(req)
+    feed.innerText = "Authorization Error: Try re-logging in to J-novel.";
 }
 
+// Handles the response of HTTP request
 function handleResponse()
 {
-    read_parts = JSON.parse(req.response).readParts;
-    buildFeedList();
+    if (req.status == 200) {
+        read_parts = JSON.parse(req.response).readParts;
+        buildFeedList();
+    }
+    else {
+        handleFeedConnectionError(req.status);
+    }
 }
  
-
+// Function prints a message informing the user that their
+// following list is empty
 function handleEmptyFeed()
 {
     var feed = document.getElementById('feed');
     feed.innerText = "Select Series to follow via the Options Menu";
 }
 
+// Prints an error message when the HTTP request fails
+function handleFeedConnectionError(errorStatus)
+{
+    var feed = document.getElementById('feed');
+    feed.innerText = "Connection Error: Verify you are logged into J-novel. HTTP Status: " + errorStatus;
+}
+
+// Function returns whether the user has already read the chapter or not
 function read_chapter(part_id)
 {
     for (var i = 0; i < read_parts.length; i++) {
@@ -86,6 +130,8 @@ function read_chapter(part_id)
     return false;
 }
 
+// Function handles displaying or hidding the chapter list for
+// the various novels
 function activate_accordion_buttons() {
     var acc = document.getElementsByClassName("accordion");
     var i;
@@ -103,6 +149,7 @@ function activate_accordion_buttons() {
     }
 }
 
+// Function handles opening the selected chapter in a new tab.
 function activate_hyperlinks() {
     var links = document.getElementsByTagName("a");
     for (var i = 0; i < links.length; i++) {
@@ -116,14 +163,17 @@ function activate_hyperlinks() {
     }
 }
 
+// Handles building the queue. It loops through the follow novel list
+// and adds a novel button if the novel contains any unread chapters.
+// When the button is pressed, the unread chapter are displayed to the
+// user. The user can click the chapter to open the chapter in a new tab
 function buildFeedList() {
 
     var not_following = true;
     var feed = document.getElementById('feed');
+
     // Set ARIA role indicating the feed element has a tree structure
-
     feed.setAttribute('role', 'tree');
-
 
     for (var i = 0; i < follow_list.length; i++) {
         var unread_count = 0;
@@ -169,4 +219,5 @@ function buildFeedList() {
 }
 
 
+// Add a listener to run main when the script loads
 document.addEventListener('DOMContentLoaded', main);
