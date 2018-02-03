@@ -1,3 +1,13 @@
+// Copyright (c) 2018
+// @author Michael Weir
+// Use of this source code is govered by the GPLv3 license that can be
+// found in the LICENSE file
+
+// This file is responsible for letting the user configure which novels
+// to follow. It query's j-novel for the available novel list and then
+// displays that list as checkbox list that the user can select which
+// novels to follow.
+
 
 // Feed
 var feedUrl = 'https://api.j-novel.club/api/series?filter={%22order%22:%22title%22}'
@@ -11,6 +21,8 @@ var req;
 var web_series_list = null;
 var follow_series_list = [];
 
+// Main function responsible for querying the list of available novels
+// in alphabetical order
 function main()
 {
     req = new XMLHttpRequest();
@@ -46,7 +58,10 @@ function handleResponse()
     buildOptionsList();
 }
 
-
+// Function is responsible for building the list of available novels
+// and displaying the results as a checkbox list. When the user
+// saves their seleection. The extension saves the selected novel
+// list via the sync storage API
 function buildOptionsList()
 {
     var options = document.getElementById('options');
@@ -88,6 +103,8 @@ function buildOptionsList()
     restore_options();
 }
 
+// Function responsible for saving the list of novels the user
+// wants to follow
 function save_options()
 {
     for (var i = 0; i < web_series_list.length; i++) {
@@ -109,11 +126,14 @@ function save_options()
     chrome.storage.sync.set({"follow_list": JSON.stringify(follow_series_list)}, save_callback);
 }
 
+// Function responsibile for querying the list of novels the user is already following
+// and pre-populating those selections
 function restore_options()
 {
     chrome.storage.sync.get("follow_list", restore_callback);
 }
 
+// Function that handles pre-populating the selected novel list.
 function restore_callback(items)
 {
     if (items.hasOwnProperty('follow_list')) {
@@ -126,7 +146,7 @@ function restore_callback(items)
             var checkbox = document.getElementById(novel_obj.id)
 
             // If there is not a checkbox is not present with the id matching the
-            // novel id. The the series ID has changed or the nove has been removed
+            // novel id. Either the series ID has changed or the series has been removed
             // in either case silently ignore and continue
             if (!checkbox)
                 continue;
@@ -140,24 +160,33 @@ function restore_callback(items)
     document.getElementById('clear').addEventListener('click', clear_storage);
 }
 
+// Function callback that handles the response when the user saves their selection
 function save_callback()
 {
     var bgPage;
 
     alert('J-Queue Updated');
+
+    // Clears the previous poll timer (if one exists) and creates a new one
+    // Also manually kicks off the chapter list poll so any new novels added
+    // will have a chapter list immediately available
     chrome.alarms.clear("poll");
     chrome.alarms.create("poll", {delayInMinutes: 1440, periodInMinutes: 1440});
     bgPage = chrome.extension.getBackgroundPage();
     bgPage.poll();
 }
 
+// Function callback that handle the user clearing their novel selection
 function clear_storage()
 {
+    // Unsets all the checkboxes
     for (var i = 0; i < web_series_list.length; i++) {
         var novel_obj = web_series_list[i];
         document.getElementById(novel_obj.id).checked = false;
     }
 
+    // Disable the poll timer and clear the sync storage used
+    // to hold the follow novel list
     chrome.alarms.clear("poll");
     chrome.storage.sync.clear(clear_callback);
 }
@@ -167,4 +196,5 @@ function clear_callback()
     alert('J-Queue Cleared Selected Series');
 }
 
+// Add event listener for when the script is loaded.
 document.addEventListener('DOMContentLoaded', main);
