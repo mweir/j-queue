@@ -88,7 +88,7 @@ function poll_callback(items)
 function poll()
 {
     parts_hash_table = {};
-    chrome.storage.sync.get("follow_list", poll_callback);
+    chrome.storage.sync.get('follow_list', poll_callback);
 }
 
 function alarm_callback(alarm)
@@ -97,7 +97,17 @@ function alarm_callback(alarm)
     poll();
 }
 
+function checkForValidUrl(tabId, changeInfo, tab)
+{
+    if (tab && tab.url) {
+        if (tab.url.indexOf('j-novel.club') > -1) {
+            chrome.pageAction.show(tabId);
+        }
+    }
+}
+
 chrome.webRequest.onSendHeaders.addListener(
     send_headers_callback, filter, ["requestHeaders"]);
 
 chrome.alarms.onAlarm.addListener(alarm_callback);
+chrome.tabs.onUpdated.addListener(checkForValidUrl);
