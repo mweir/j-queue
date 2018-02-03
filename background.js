@@ -100,7 +100,7 @@ function retrieve_series_parts()
     if (follow_series_list.length <= follow_index) {
         chrome.storage.local.set({
             "parts_hash_table": JSON.stringify(parts_hash_table)},
-            save_callback);
+            save_parts_callback);
         return;
     }
 
@@ -112,6 +112,11 @@ function retrieve_series_parts()
     req.onerror = handleError;
     req.open('GET', seriesUrl + titleslug + seriesInclude, true);
     req.send(null);
+}
+
+// Empty Callback Function
+function save_parts_callback()
+{
 }
 
 // Handles the update novel chapter list HTTP request response. The function

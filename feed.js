@@ -179,6 +179,7 @@ function buildFeedList() {
 
     var not_following = true;
     var feed = document.getElementById('feed');
+    var empty_feed = true;
 
     // Set ARIA role indicating the feed element has a tree structure
     feed.setAttribute('role', 'tree');
@@ -199,6 +200,8 @@ function buildFeedList() {
         if (unread_count == 0) {
             continue;
         }
+
+        empty_feed = false;
 
         var novel_button = document.createElement('button');
         novel_button.innerText = novel_obj.title + " (" + unread_count + ")";
@@ -222,8 +225,13 @@ function buildFeedList() {
         console.log(novel_obj.title);
     }
 
-    activate_accordion_buttons();
-    activate_hyperlinks();
+    if (empty_feed) {
+        displayMessage("All Chapters have been read. You can add more novels via the Options Menu");
+    }
+    else {
+        activate_accordion_buttons();
+        activate_hyperlinks();
+    }
 }
 
 

@@ -107,6 +107,8 @@ function buildOptionsList()
 // wants to follow
 function save_options()
 {
+    follow_series_list = [];
+
     for (var i = 0; i < web_series_list.length; i++) {
         var novel_obj = web_series_list[i];
 
@@ -137,12 +139,12 @@ function restore_options()
 function restore_callback(items)
 {
     if (items.hasOwnProperty('follow_list')) {
-        var follow_series_list = JSON.parse(items.follow_list);
+        var restore_series_list = JSON.parse(items.follow_list);
 
-        console.log(follow_series_list);
+        console.log(restore_series_list);
 
-        for (var i = 0; i < follow_series_list.length; ++i) {
-            var novel_obj = follow_series_list[i];
+        for (var i = 0; i < restore_series_list.length; ++i) {
+            var novel_obj = restore_series_list[i];
             var checkbox = document.getElementById(novel_obj.id)
 
             // If there is not a checkbox is not present with the id matching the
