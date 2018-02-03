@@ -2,7 +2,7 @@
   "manifest_version": 2,
 
   "name": "J-Queue",
-  "description": "This extension provides queue functionality for j-novel.",
+  "description": "This extension provides queue functionality for j-novel.club",
   "version": "0.4.0",
 
   "page_action": {
