@@ -15,7 +15,7 @@ function send_headers_callback(req) {
 
             for (var i = 0; i < req.requestHeaders.length; ++i) {
                 var header = req.requestHeaders[i];
-                if (header.name == "Authorization") {
+                if (header.name.toLowerCase() == "authorization") {
                     auth_obj["auth_value"] = header.value;
                     break;
                 }
