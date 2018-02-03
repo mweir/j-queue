@@ -3,7 +3,7 @@
 
   "name": "J-Queue",
   "description": "This extension provides queue functionality for j-novel.",
-  "version": "0.2.0",
+  "version": "0.3.0",
 
   "browser_action": {
 	  "default_icon": "icon.png",
@@ -13,8 +13,8 @@
   "options_page":"options.html",
   "permissions": [
     "activeTab",
+    "alarms",
     "storage",
-    "cookies",
     "webRequest",
     "*://*.j-novel.club/"
   ],

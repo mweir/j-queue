@@ -1,41 +1,58 @@
 
-var series_list;
+var userUrl = 'https://api.j-novel.club/api/users/';
+var userFilter = '?filter={%22include%22:[%22accessTokens%22,%22credentials%22,%22identities%22,%22readParts%22,%22roles%22,%22subscriptions%22]}'
+
+var follow_list;
+var parts_hash_table;
+var read_parts;
+var req;
 
 function main() {
-    console.log(btoa("p"));
-    console.log(atob(btoa("paul.michael.weir@gmail.com:pw4mike2")));
-    load_series_list();
+    load_follow_list();
 }
 
-function load_series_list()
+function load_follow_list()
 {
-    chrome.storage.sync.get("series_list", load_callback);
+    chrome.storage.sync.get("follow_list", load_callback);
 }
 
 function load_callback(items)
 {
-    if (items.hasOwnProperty('series_list')) {
-        var cookie_filter = {};
-        series_list = JSON.parse(items.series_list);
-        chrome.cookies.getAll(cookie_filter, cookie_callback);
-    }
-    else {
+    if (!items.hasOwnProperty('follow_list')) {
         handleEmptyFeed();
+        return;
     }
+    
+    follow_list = JSON.parse(items.follow_list);
+    if (follow_list.length == 0) {
+        handleEmptyFeed();
+        return;
+    }
+    
+    read_user_info();
 }
 
-function cookie_callback(cookies)
+function read_user_info()
 {
-    console.log(cookies);
-    var feedUrl = 'https://api.j-novel.club/api/users/58a4a1787e51ff3b66eb31ea';
+    chrome.storage.local.get(["auth_obj", "parts_hash_table"], storage_callback);
+}
 
-    req = new XMLHttpRequest();
-    req.open('GET', feedUrl, true);
-    req.setRequestHeader("Authorization", "Basic " + btoa("paul.michael.weir@gmail.com:password"));
-    req.withCredentials = true;
-    req.onload = handleResponse;
-    req.onerror = handleError;
-    req.send(null);
+function storage_callback(items) {
+    if (items.hasOwnProperty('parts_hash_table')) {
+        parts_hash_table = JSON.parse(items.parts_hash_table);
+    }
+
+    if (items.hasOwnProperty('auth_obj')) {
+        var auth_obj = JSON.parse(items.auth_obj);
+        console.log(auth_obj);
+
+        req = new XMLHttpRequest();
+        req.open('GET', userUrl + auth_obj.user_id + userFilter, true);
+        req.onload = handleResponse;
+        req.onerror = handleError;
+        req.setRequestHeader('Authorization', auth_obj.auth_value);
+        req.send(null);
+    }
 }
 
 function handleError()
@@ -46,8 +63,8 @@ function handleError()
 
 function handleResponse()
 {
-    console.log("Success");
-    console.log(req);
+    read_parts = JSON.parse(req.response).readParts;
+    buildFeedList();
 }
  
 
@@ -57,8 +74,19 @@ function handleEmptyFeed()
     feed.innerText = "Select Series to follow via the Options Menu";
 }
 
+function read_chapter(part_id)
+{
+    for (var i = 0; i < read_parts.length; i++) {
+        if (read_parts[i].partId == part_id) {
+            return true;
+        }
+    }
 
-function buildFeedList(series_list) {
+    return false;
+}
+
+
+function buildFeedList() {
 
     var not_following = true;
     var feed = document.getElementById('feed');
@@ -68,27 +96,29 @@ function buildFeedList(series_list) {
 
     var list = document.createElement('ul');
 
-    for (var i = 0; i < series_list.length; i++) {
-        var novel_obj = series_list[i];
-        if (novel_obj.follow) {
-            var item = document.createElement('li');
+    for (var i = 0; i < follow_list.length; i++) {
+        var unread_count = 0;
+        var novel_obj = follow_list[i];
+        var parts = parts_hash_table[novel_obj.id]
+        var item = document.createElement('li');
 
-            // Sets its contents
-            item.appendChild(document.createTextNode(novel_obj.title));
-
-            // Add it to the list
-            list.appendChild(item);
-
-            console.log(novel_obj.title);
-
-            not_following = false;
+        for (var j = 0; j < parts.length; j++) {
+            if (!read_chapter(parts[j].id)) {
+                unread_count = unread_count + 1;
+            }
         }
+        
+
+        // Sets its contents
+        item.appendChild(document.createTextNode(novel_obj.title +" (" + unread_count +")"));
+
+       // Add it to the list
+       list.appendChild(item);
+
+       console.log(novel_obj.title);
     }
 
-    if (not_following)
-        handleEmptyFeed();
-    else
-        feed.appendChild(list);
+    feed.appendChild(list);
 }
 
 

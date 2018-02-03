@@ -9,6 +9,7 @@ var req;
 // j-novel API. The extension needs to pull the list from the server
 // in cases novels were added or removed
 var web_series_list = null;
+var follow_series_list = [];
 
 function main()
 {
@@ -89,42 +90,39 @@ function buildOptionsList()
 
 function save_options()
 {
-    var saved_series_list = [];
     for (var i = 0; i < web_series_list.length; i++) {
         var novel_obj = web_series_list[i];
-        var saved_novel_obj = {};
 
         var follow = document.getElementById(novel_obj.id).checked
 
-        // Previously was just adding follow to novel object and
-        // saving the web series list directly. However, the web
-        // series list was too big to be saved as a single object by the 
-        // chrome sync interface. Thus, I just pull the information that 
-        // is needed later
-        saved_novel_obj.id = novel_obj.id;
-        saved_novel_obj.title = novel_obj.title;
-        saved_novel_obj.follow = follow;
+        if (follow) {
+            var follow_novel_obj = {};
 
-        saved_series_list.push(saved_novel_obj);
+            follow_novel_obj.id = novel_obj.id;
+            follow_novel_obj.title = novel_obj.title;
+            follow_novel_obj.titleslug = novel_obj.titleslug;
+
+            follow_series_list.push(follow_novel_obj);
+        }
     }
 
-    chrome.storage.sync.set({"series_list": JSON.stringify(saved_series_list)}, save_callback);
+    chrome.storage.sync.set({"follow_list": JSON.stringify(follow_series_list)}, save_callback);
 }
 
 function restore_options()
 {
-    chrome.storage.sync.get("series_list", restore_callback);
+    chrome.storage.sync.get("follow_list", restore_callback);
 }
 
 function restore_callback(items)
 {
-    if (items.hasOwnProperty('series_list')) {
-        var saved_series_list = JSON.parse(items.series_list);
+    if (items.hasOwnProperty('follow_list')) {
+        var follow_series_list = JSON.parse(items.follow_list);
 
-        console.log(saved_series_list);
+        console.log(follow_series_list);
 
-        for (var i = 0; i < saved_series_list.length; ++i) {
-            var novel_obj = saved_series_list[i];
+        for (var i = 0; i < follow_series_list.length; ++i) {
+            var novel_obj = follow_series_list[i];
             var checkbox = document.getElementById(novel_obj.id)
 
             // If there is not a checkbox is not present with the id matching the
@@ -133,7 +131,7 @@ function restore_callback(items)
             if (!checkbox)
                 continue;
 
-            checkbox.checked = novel_obj.follow;
+            checkbox.checked = true;
         }
     }
 
@@ -144,7 +142,13 @@ function restore_callback(items)
 
 function save_callback()
 {
+    var bgPage;
+
     alert('J-Queue Updated');
+    chrome.alarms.clear("poll");
+    chrome.alarms.create("poll", {delayInMinutes: 1440, periodInMinutes: 1440});
+    bgPage = chrome.extension.getBackgroundPage();
+    bgPage.poll();
 }
 
 function clear_storage()
@@ -154,6 +158,7 @@ function clear_storage()
         document.getElementById(novel_obj.id).checked = false;
     }
 
+    chrome.alarms.clear("poll");
     chrome.storage.sync.clear(clear_callback);
 }
 
