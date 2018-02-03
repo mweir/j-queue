@@ -24,9 +24,6 @@ function send_headers_callback(req) {
 
         chrome.storage.local.set({"auth_obj": JSON.stringify(auth_obj)}, save_callback);
     }
-    else if (req.url = base_url + "logout") {
-        chrome.storage.local.remove("auth_obj");
-    }
 }
 
 function save_callback()
