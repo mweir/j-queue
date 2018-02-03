@@ -103,19 +103,27 @@ function handleResponse()
     }
 }
  
+function displayMessage(message) {
+    var feed = document.getElementById('feed');
+
+    var message_div = document.createElement('div');
+    message_div.classList.add('message');
+    message_div.innerText = message;
+    feed.appendChild(message_div);
+}
+
 // Function prints a message informing the user that their
 // following list is empty
 function handleEmptyFeed()
 {
-    var feed = document.getElementById('feed');
-    feed.innerText = "Select Series to follow via the Options Menu";
+    displayMessage("Select Series to follow via the Options Menu");
 }
 
 // Prints an error message when the HTTP request fails
 function handleFeedConnectionError(errorStatus)
 {
-    var feed = document.getElementById('feed');
-    feed.innerText = "Connection Error: Verify you are logged into J-novel. HTTP Status: " + errorStatus;
+    displayMessage("Connection Error: Verify you are " +
+        "logged into J-novel. HTTP Status: " + errorStatus);
 }
 
 // Function returns whether the user has already read the chapter or not

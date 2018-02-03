@@ -16,6 +16,10 @@
     background-color: #ccc;
 }
 
+.message {
+    white-space: nowrap;
+}
+
 /* Style the accordion panel. Note: hidden by default */
 .panel {
     padding: 0 18px;
