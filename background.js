@@ -4,16 +4,19 @@
 // found in the LICENSE file
 
 // This file contains the following background functionality
-//   - Send XMLHttpRequest Send Headers Callback
-//      * Intercepts request to api.j-novel.club/users to intercept the user
-//        authentication id so that the extension can query user information
+//   - XMLHttpRequest Send Headers Callback
+//      * Listener that Intercepts request to api.j-novel.club/users. The
+//        extension intercepts these requests to learn both the user id
+//        and current session authentication ID. The extension uses this
+//        information to make its own authentication request for user
+//        information (aka what chapter they have read).
 //   - Alarm Callback
 //     * The alarm callback fires once a day. When fired the extension polls
-//       j-novel for new chapter and for chapters that have expired. Saves the
-//       result locally for the feed.js to use
+//       j-novel for both new chapter expired chapters. Saves the
+//       result locally for use by feed.js.
 //   - Page Action
-//     * Handles when the enable the page action functionality (when
-//       the user is on j-novel.club
+//     * Handles enabling the page action functionality (when
+//       the user is on j-novel.club).
 
 
 //================== XMLHttpRequest Send Headers Callback =====================
@@ -21,9 +24,9 @@ var base_url = "https://api.j-novel.club/api/users/"
 var filter = {urls: [base_url + "*"]};
 
 // Function is notified any time a call is made to api.j-novel.club/api/users
-// The function looks saves both the user id and the authorization token
+// The function saves both the user id and the current authorization token
 // from the request. This information is used by feed.js to query
-// which chapter a user has already read
+// which chapters a user has already read
 //
 // @param req  The HTTP request object
 function send_headers_callback(req) {
@@ -51,7 +54,7 @@ function save_auth_callback()
 {
 }
 
-// Adds a listener for HTTP request that go to api.j-novel.club/api/users
+// Adds a listener for HTTP request to api.j-novel.club/api/users
 chrome.webRequest.onSendHeaders.addListener(
     send_headers_callback, filter, ["requestHeaders"]);
 
@@ -65,7 +68,7 @@ var req;
 
 // This function retrieves the list of novels the user is following. For each
 // novel in the list, the poll function retrieves the chapter list and
-// saves the updated list to be used by feed.js. This function either
+// saves the updated list to be used by feed.js. This function is called either
 // by the alarm callback (once a day) or when the user modifies the list
 // of novels which they are following
 function poll()
