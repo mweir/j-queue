@@ -7,7 +7,7 @@
 
 var userUrl = 'https://api.j-novel.club/api/users/';
 var userFilter = '?filter={%22include%22:[%22accessTokens%22,%22credentials%22,%22identities%22,%22readParts%22,%22roles%22,%22subscriptions%22]}'
-var redirectURL = 'https://j-novel.club/c/'
+var redirectURL = 'https://j-novel.club/read/'
 
 var follow_list;
 var parts_hash_table;
@@ -217,7 +217,7 @@ function buildFeedList() {
             var part_section = document.createElement('div');
             var part_hyperlink = document.createElement('a');
             part_hyperlink.innerText = unread[j].title;
-            part_hyperlink.setAttribute('href', redirectURL + unread[j].titleslug + "/search");
+            part_hyperlink.setAttribute('href', redirectURL + unread[j].titleslug);
             part_section.appendChild(part_hyperlink);
             part_div.appendChild(part_section);
         }
